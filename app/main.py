@@ -20,7 +20,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:4200",  # Angular development
         settings.FRONTEND_URL,     # From environment
-        "https://your-frontend.vercel.app"  # Production (update this!)
+        "https://steamx-v1-frontend.vercel.app"  # Production (update this!)
     ],
     allow_credentials=True,
     allow_methods=["*"],
