@@ -16,17 +16,16 @@ class RAGService:
         
         async with httpx.AsyncClient() as client:
             try:
-                # Try different authentication methods
-                
-                # METHOD 1: API key in header (no Bearer)
                 response = await client.post(
                     self.api_url,
                     headers={
                         "Content-Type": "application/json",
-                        "X-API-Key": self.api_key  # Changed from Authorization
+                        "X-API-Key": self.api_key
                     },
                     json={
-                        "question": question
+                        "query": question,
+                        "book_id": "biology_9",
+                        "session_id": None
                     },
                     timeout=60.0
                 )
