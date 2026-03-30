@@ -29,7 +29,7 @@ class ChatService:
     
     @staticmethod
     def get_session_with_messages(db: Session, session_id: UUID, user: User):
-        """Get a specific session with all its messages"""
+        """Get a specific session with all messages"""
         
         session = db.query(ChatSession)\
             .filter(ChatSession.id == session_id, ChatSession.user_id == user.id)\
@@ -85,7 +85,9 @@ class ChatService:
         
         # Call RAG service
         rag_service = RAGService()
-        answer = await rag_service.get_answer(question, chat_history)
+        rag_result = await rag_service.get_answer(question, chat_history)
+        answer = rag_result.get("answer", "")
+        figures = rag_result.get("figures", [])
         
         # Save assistant message
         assistant_message = ChatMessage(
@@ -108,7 +110,8 @@ class ChatService:
         return {
             "question": question,
             "answer": answer,
-            "session_id": str(session_id)
+            "session_id": str(session_id),
+            "figures": figures
         }
     
     @staticmethod

@@ -9,7 +9,7 @@ class RAGService:
         self.api_url = settings.RAG_API_URL
         self.api_key = settings.RAG_API_KEY
     
-    async def get_answer(self, question: str, chat_history: list = None) -> str:
+    async def get_answer(self, question: str, chat_history: list = None) -> dict:
         """
         Call your RAG API to get an answer
         """
@@ -33,10 +33,10 @@ class RAGService:
                 response.raise_for_status()
                 data = response.json()
                 
-                # Extract answer - adjust based on your response
-                answer = data.get("answer") or data.get("response") or str(data)
-                
-                return answer
+                return {
+                    "answer": data.get("answer") or data.get("response") or str(data),
+                    "figures": data.get("figures", [])
+                }
                 
             except httpx.TimeoutException:
                 raise HTTPException(
