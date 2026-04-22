@@ -23,7 +23,10 @@ app.add_middleware(
         "https://steamx-v1-frontend.vercel.app",  # Production (update this!)
         "https://steamx.it.com",          # add this
         "https://www.steamx.it.com",
-        "https://www.steamx.it.com/"       # add this
+        "https://www.steamx.it.com/",
+        "https://steamx.pk",          # add this
+        "https://www.steamx.pk",
+        "https://www.steamx.pk/"     # add this
     ],
     allow_credentials=True,
     allow_methods=["*"],
