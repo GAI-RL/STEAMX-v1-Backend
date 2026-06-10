@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.config import settings
 from app.models.user import User
-from app.schemas.auth import TokenResponse
 from app.schemas.user import UserResponse
+from app.schemas.google_auth import GoogleAuthResponse
 from app.utils.security import create_access_token, create_refresh_token
 
 class GoogleAuthService:
@@ -14,18 +14,16 @@ class GoogleAuthService:
     def verify_google_token(token: str) -> dict:
         """Verify Google ID token and return user info"""
         try:
-            # Verify the token
             idinfo = id_token.verify_oauth2_token(
                 token, 
                 requests.Request(), 
-                settings.GOOGLE_CLIENT_ID
+                settings.GOOGLE_CLIENT_ID,
+                clock_skew_in_seconds=60
             )
             
-            # Verify issuer
             if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
                 raise ValueError('Wrong issuer.')
             
-            # Return user info from token
             return {
                 'google_id': idinfo['sub'],
                 'email': idinfo['email'],
@@ -41,10 +39,9 @@ class GoogleAuthService:
             )
     
     @staticmethod
-    def authenticate_google_user(db: Session, token: str) -> TokenResponse:
+    def authenticate_google_user(db: Session, token: str) -> GoogleAuthResponse:
         """Authenticate user with Google token"""
         
-        # Verify Google token
         user_info = GoogleAuthService.verify_google_token(token)
         
         # Check if user exists by Google ID
@@ -69,7 +66,7 @@ class GoogleAuthService:
                     profile_picture=user_info['profile_picture'],
                     auth_provider='google',
                     is_verified=True,
-                    password_hash=None  # No password for Google users
+                    password_hash=None
                 )
                 db.add(user)
             
@@ -80,8 +77,8 @@ class GoogleAuthService:
         access_token = create_access_token({"sub": str(user.id)})
         refresh_token = create_refresh_token({"sub": str(user.id)})
         
-        return TokenResponse(
+        return GoogleAuthResponse(
             access_token=access_token,
             refresh_token=refresh_token,
-            user=UserResponse.from_orm(user)
+            user=UserResponse.model_validate(user)
         )

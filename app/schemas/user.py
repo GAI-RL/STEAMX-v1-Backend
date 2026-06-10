@@ -1,24 +1,35 @@
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
 from uuid import UUID
+from datetime import datetime
+from typing import Optional
 
-# Request schemas
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
     full_name: str
+    phone_number: Optional[str] = None
+    school_name: Optional[str] = None
+    province: Optional[str] = None
 
 class UserUpdate(BaseModel):
-    full_name: str | None = None
-    email: EmailStr | None = None
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    school_name: Optional[str] = None
+    province: Optional[str] = None
 
-# Response schemas
 class UserResponse(BaseModel):
     id: UUID
     email: str
     full_name: str
-    created_at: datetime
+    phone_number: Optional[str] = None
+    school_name: Optional[str] = None
+    province: Optional[str] = None
+    role: str
     subscription_tier: str
-    
+    is_verified: bool
+    created_at: datetime
+    first_login_at: Optional[datetime] = None
+    last_login_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True

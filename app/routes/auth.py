@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime
 from app.database import get_db
 from app.schemas.auth import LoginRequest, TokenResponse, RefreshTokenRequest
 from app.schemas.user import UserCreate
@@ -18,7 +19,20 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     """Login and get access tokens"""
-    return AuthService.login(db, credentials)
+    
+    result = AuthService.login(db, credentials)
+    
+    # Update login timestamps
+    from app.models.user import User
+    user = db.query(User).filter(User.email == credentials.email).first()
+    
+    if user:
+        if user.first_login_at is None:
+            user.first_login_at = datetime.utcnow()
+        user.last_login_at = datetime.utcnow()
+        db.commit()
+    
+    return result
 
 @router.post("/google", response_model=GoogleAuthResponse)
 async def google_auth(
@@ -26,7 +40,19 @@ async def google_auth(
     db: Session = Depends(get_db)
 ):
     """Authenticate with Google"""
-    return GoogleAuthService.authenticate_google_user(db, request.token)
+    result = GoogleAuthService.authenticate_google_user(db, request.token)
+    
+    # Update login timestamps
+    from app.models.user import User
+    user = db.query(User).filter(User.email == result.user.email).first()
+    
+    if user:
+        if user.first_login_at is None:
+            user.first_login_at = datetime.utcnow()
+        user.last_login_at = datetime.utcnow()
+        db.commit()
+    
+    return result
 
 @router.post("/refresh")
 async def refresh_token(request: RefreshTokenRequest):

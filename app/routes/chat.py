@@ -1,14 +1,20 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
 from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.models.user import User
+from app.models.subject import Subject
+from app.models.grade import Grade
 from app.schemas.chat import (
+    CreateSessionRequest,
     SendMessageRequest,
+    RegenerateResponseRequest,
     ChatSessionResponse,
     ChatSessionWithMessages,
-    SendMessageResponse
+    SendMessageResponse,
+    RegenerateResponseResponse,
+    ChatMessageResponse
 )
 from app.services.chat_service import ChatService
 
@@ -16,11 +22,29 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 
 @router.post("/sessions", response_model=ChatSessionResponse)
 async def create_session(
+    request: CreateSessionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new chat session"""
-    return ChatService.create_session(db, current_user)
+    """Create a new chat session with subject and grade"""
+    
+    # Verify subject exists
+    subject = db.query(Subject).filter(Subject.id == request.subject_id).first()
+    if not subject:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid subject_id"
+        )
+    
+    # Verify grade exists
+    grade = db.query(Grade).filter(Grade.id == request.grade_id).first()
+    if not grade:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid grade_id"
+        )
+    
+    return ChatService.create_session(db, current_user, request.subject_id, request.grade_id)
 
 @router.get("/sessions", response_model=list[ChatSessionResponse])
 async def get_sessions(
@@ -36,7 +60,7 @@ async def get_session(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get a specific session with all messages"""
+    """Get a specific session with all Q&A pairs"""
     return ChatService.get_session_with_messages(db, session_id, current_user)
 
 @router.post("/message", response_model=SendMessageResponse)
@@ -45,11 +69,24 @@ async def send_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Send a message and get RAG response"""
+    """Send a prompt and get AI response (stores as one Q&A row)"""
     return await ChatService.send_message(
         db, 
         request.session_id, 
-        request.question, 
+        request.prompt, 
+        current_user
+    )
+
+@router.post("/message/regenerate", response_model=RegenerateResponseResponse)
+async def regenerate_response(
+    request: RegenerateResponseRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Regenerate a response for an existing prompt"""
+    return await ChatService.regenerate_response(
+        db,
+        request.message_id,
         current_user
     )
 
