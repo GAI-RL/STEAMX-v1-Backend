@@ -15,20 +15,32 @@ app = FastAPI(
 )
 
 # CORS middleware
+allowed_origins = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+
+    "https://steamx-v1-frontend.vercel.app",
+    "https://steamx-v1-frontend.onrender.com",
+    "https://steamx-v1-backend.onrender.com",
+
+    "https://steamx.it.com",
+    "https://www.steamx.it.com",
+    "https://steamx.pk",
+    "https://www.steamx.pk",
+]
+
+# Add FRONTEND_URL from environment only if it exists
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in allowed_origins:
+    allowed_origins.append(settings.FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:4200",
-        settings.FRONTEND_URL,
-        "https://steamx-v1-frontend.vercel.app",
-        "https://steamx.it.com",
-        "https://www.steamx.it.com",
-        "https://steamx.pk",
-        "https://www.steamx.pk",
-    ],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*steamx.*|http://localhost:.*|http://127\.0\.0\.1:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers

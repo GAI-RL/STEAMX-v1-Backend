@@ -111,9 +111,18 @@ class ChatService:
             chat_history.append({"role": "user", "content": qa.prompt})
             chat_history.append({"role": "assistant", "content": qa.response})
         
-        # Call RAG service
+        # Call RAG service with selected grade + subject from this chat session
         rag_service = RAGService()
-        rag_result = await rag_service.get_answer(prompt, chat_history, system_context)
+        rag_result = await rag_service.get_answer(
+            question=prompt,
+            chat_history=chat_history,
+            system_context=system_context,
+            session_id=str(session.id),
+            subject_id=str(subject.id),
+            subject_name=subject.name,
+            grade_id=str(grade.id),
+            grade_level=grade.level,
+        )
         response = rag_result.get("answer", "")
         figures = rag_result.get("figures", [])
         
@@ -209,10 +218,20 @@ class ChatService:
             "created_at": datetime.utcnow().isoformat()
         })
         
-        # Call RAG service for new response
+        # Call RAG service for new response with the same selected grade + subject
         rag_service = RAGService()
-        rag_result = await rag_service.get_answer(qa.prompt, [], system_context)
+        rag_result = await rag_service.get_answer(
+            question=qa.prompt,
+            chat_history=[],
+            system_context=system_context,
+            session_id=str(session.id),
+            subject_id=str(subject.id),
+            subject_name=subject.name,
+            grade_id=str(grade.id),
+            grade_level=grade.level,
+        )
         new_response = rag_result.get("answer", "")
+        figures = rag_result.get("figures", [])
         
         # Update the Q&A pair
         qa.previous_responses = previous_responses
@@ -225,7 +244,8 @@ class ChatService:
         return {
             "message_id": qa.id,
             "response": new_response,
-            "response_version": qa.response_version
+            "response_version": qa.response_version,
+            "figures": figures,
         }
     
     @staticmethod
