@@ -74,7 +74,8 @@ async def send_message(
         db, 
         request.session_id, 
         request.prompt, 
-        current_user
+        current_user,
+        request.file_ids
     )
 
 @router.post("/message/regenerate", response_model=RegenerateResponseResponse)

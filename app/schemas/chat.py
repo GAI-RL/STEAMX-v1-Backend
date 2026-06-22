@@ -16,6 +16,23 @@ class RegenerateResponseRequest(BaseModel):
     message_id: UUID
 
 # Response Schemas
+class FileResponse(BaseModel):
+    id: UUID
+    filename: str
+    mime_type: str
+    size_bytes: int
+
+    class Config:
+        from_attributes = True
+
+class AttachmentResponse(BaseModel):
+    id: UUID
+    file_id: UUID
+    file: Optional[FileResponse] = None
+
+    class Config:
+        from_attributes = True
+
 class ChatMessageResponse(BaseModel):
     id: UUID
     session_id: UUID
@@ -24,7 +41,11 @@ class ChatMessageResponse(BaseModel):
     response_version: int
     created_at: datetime
     updated_at: datetime
+<<<<<<< HEAD
     figures: list[Any] = []
+=======
+    attachments: list[AttachmentResponse] = []
+>>>>>>> 42c121a (response updated + feedback issue resolved + upload style changed)
 
     class Config:
         from_attributes = True
@@ -58,7 +79,11 @@ class SendMessageResponse(BaseModel):
     response: str
     response_version: int
     created_at: datetime
+<<<<<<< HEAD
     figures: list[Any] = []
+=======
+    attachments: list[AttachmentResponse] = []
+>>>>>>> 42c121a (response updated + feedback issue resolved + upload style changed)
 
 class RegenerateResponseResponse(BaseModel):
     message_id: UUID
