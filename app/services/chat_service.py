@@ -99,7 +99,9 @@ class ChatService:
         grade = db.query(Grade).filter(Grade.id == session.grade_id).first()
         
         # Build system context
-        system_context = f"You are a tutor helping a {grade.level}th grade student with {subject.name}. Provide clear, educational responses."
+        grade_level = grade.level if grade else "unknown"
+        subject_name = subject.name if subject else "various subjects"
+        system_context = f"You are a tutor helping a {grade_level}th grade student with {subject_name}. Provide clear, educational responses."
         
         # Get previous Q&A pairs for context
         previous_qa = db.query(ChatMessage)\
@@ -120,10 +122,10 @@ class ChatService:
             chat_history=chat_history,
             system_context=system_context,
             session_id=str(session.id),
-            subject_id=str(subject.id),
-            subject_name=subject.name,
-            grade_id=str(grade.id),
-            grade_level=grade.level,
+            subject_id=str(subject.id) if subject else None,
+            subject_name=subject.name if subject else None,
+            grade_id=str(grade.id) if grade else None,
+            grade_level=grade.level if grade else None,
         )
         response = rag_result.get("answer", "")
         figures = rag_result.get("figures", [])
@@ -231,8 +233,9 @@ class ChatService:
         subject = db.query(Subject).filter(Subject.id == session.subject_id).first()
         grade = db.query(Grade).filter(Grade.id == session.grade_id).first()
         
-        # Build system context
-        system_context = f"You are a tutor helping a {grade.level}th grade student with {subject.name}. Provide clear, educational responses."
+        grade_level = grade.level if grade else "unknown"
+        subject_name = subject.name if subject else "various subjects"
+        system_context = f"You are a tutor helping a {grade_level}th grade student with {subject_name}. Provide clear, educational responses."
         
         # Save current response to previous_responses
         previous_responses = qa.previous_responses or []
@@ -249,10 +252,10 @@ class ChatService:
             chat_history=[],
             system_context=system_context,
             session_id=str(session.id),
-            subject_id=str(subject.id),
-            subject_name=subject.name,
-            grade_id=str(grade.id),
-            grade_level=grade.level,
+            subject_id=str(subject.id) if subject else None,
+            subject_name=subject.name if subject else None,
+            grade_id=str(grade.id) if grade else None,
+            grade_level=grade.level if grade else None,
         )
         new_response = rag_result.get("answer", "")
         figures = rag_result.get("figures", [])

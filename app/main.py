@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
-from app.routes import auth, chat, user, feedback, subjects, dashboard
+from app.routes import auth, chat, user, feedback, subjects, dashboard, files
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -50,6 +50,7 @@ app.include_router(user.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 app.include_router(subjects.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
+app.include_router(files.router, prefix="/api")
 
 # Root endpoint
 @app.get("/")

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Boolean, DateTime, ForeignKey, Enum as SQLAlchemyEnum
+from sqlalchemy import Column, String, Text, Boolean, Integer, DateTime, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -36,7 +36,8 @@ class Feedback(Base):
     message = Column(Text, nullable=False)
     
     # Rating for Q&A
-    rating = Column(Boolean, nullable=True)
+    rating = Column(Integer, nullable=True)
+    comment = Column(Text, nullable=True)
     
     # Admin fields
     status = Column(SQLAlchemyEnum(FeedbackStatus), default=FeedbackStatus.NEW)
@@ -49,4 +50,4 @@ class Feedback(Base):
     # Relationships - explicit foreign_keys
     user = relationship("User", foreign_keys=[user_id], back_populates="feedbacks")
     assignee = relationship("User", foreign_keys=[assigned_to], back_populates="assigned_feedbacks")
-    message = relationship("ChatMessage", back_populates="feedbacks")
+    chat_message = relationship("ChatMessage", back_populates="feedbacks")
