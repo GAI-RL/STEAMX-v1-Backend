@@ -41,11 +41,7 @@ class ChatMessageResponse(BaseModel):
     response_version: int
     created_at: datetime
     updated_at: datetime
-<<<<<<< HEAD
     figures: list[Any] = []
-=======
-    attachments: list[AttachmentResponse] = []
->>>>>>> 42c121a (response updated + feedback issue resolved + upload style changed)
 
     class Config:
         from_attributes = True
@@ -79,11 +75,7 @@ class SendMessageResponse(BaseModel):
     response: str
     response_version: int
     created_at: datetime
-<<<<<<< HEAD
     figures: list[Any] = []
-=======
-    attachments: list[AttachmentResponse] = []
->>>>>>> 42c121a (response updated + feedback issue resolved + upload style changed)
 
 class RegenerateResponseResponse(BaseModel):
     message_id: UUID
