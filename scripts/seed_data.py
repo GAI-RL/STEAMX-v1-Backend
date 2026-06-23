@@ -24,6 +24,7 @@ def seed_subjects():
         {"name": "Urdu", "icon": "📖", "color": "#14B8A6", "is_active": True},
         {"name": "Pakistan Studies", "icon": "🇵🇰", "color": "#F97316", "is_active": True},
         {"name": "Islamic Studies", "icon": "🕌", "color": "#A855F7", "is_active": True},
+        {"name": "Tarjuma tul Quran", "icon": "📖", "color": "#D97706", "is_active": True},
     ]
     
     db = SessionLocal()
