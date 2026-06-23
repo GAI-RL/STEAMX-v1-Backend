@@ -34,4 +34,4 @@ class ChatMessage(Base):
     # Relationships
     session = relationship("ChatSession", back_populates="messages")
     attachments = relationship("MessageAttachment", back_populates="message", cascade="all, delete-orphan")
-    feedbacks = relationship("Feedback", back_populates="message")
+    feedbacks = relationship("Feedback", back_populates="chat_message")

@@ -8,6 +8,8 @@ from app.models.user import User
 from app.models.subject import Subject
 from app.models.grade import Grade
 from app.models.usage_daily import UsageDaily
+from app.models.uploaded_file import UploadedFile
+from app.models.message_attachment import MessageAttachment
 from app.services.rag_service import RAGService
 
 class ChatService:
@@ -78,7 +80,7 @@ class ChatService:
         return {"session": session, "messages": messages}
     
     @staticmethod
-    async def send_message(db: Session, session_id: UUID, prompt: str, user: User) -> dict:
+    async def send_message(db: Session, session_id: UUID, prompt: str, user: User, file_ids: list[UUID] = None) -> dict:
         """Send a prompt and get AI response (stores as one Q&A row)"""
         
         # Verify session belongs to user
@@ -97,7 +99,9 @@ class ChatService:
         grade = db.query(Grade).filter(Grade.id == session.grade_id).first()
         
         # Build system context
-        system_context = f"You are a tutor helping a {grade.level}th grade student with {subject.name}. Provide clear, educational responses."
+        grade_level = grade.level if grade else "unknown"
+        subject_name = subject.name if subject else "various subjects"
+        system_context = f"You are a tutor helping a {grade_level}th grade student with {subject_name}. Provide clear, educational responses."
         
         # Get previous Q&A pairs for context
         previous_qa = db.query(ChatMessage)\
@@ -118,10 +122,10 @@ class ChatService:
             chat_history=chat_history,
             system_context=system_context,
             session_id=str(session.id),
-            subject_id=str(subject.id),
-            subject_name=subject.name,
-            grade_id=str(grade.id),
-            grade_level=grade.level,
+            subject_id=str(subject.id) if subject else None,
+            subject_name=subject.name if subject else None,
+            grade_id=str(grade.id) if grade else None,
+            grade_level=grade.level if grade else None,
         )
         response = rag_result.get("answer", "")
         figures = rag_result.get("figures", [])
@@ -137,6 +141,26 @@ class ChatService:
             updated_at=datetime.utcnow()
         )
         db.add(new_qa)
+        db.flush() # Flush to get the new_qa.id for attachments
+        
+        # Link files to the message
+        files_count = 0
+        if file_ids:
+            for file_id in file_ids:
+                # Verify file exists and belongs to user
+                uploaded_file = db.query(UploadedFile).filter(
+                    UploadedFile.id == file_id,
+                    UploadedFile.user_id == user.id
+                ).first()
+                
+                if uploaded_file:
+                    attachment = MessageAttachment(
+                        message_id=new_qa.id,
+                        file_id=file_id
+                    )
+                    db.add(attachment)
+                    uploaded_file.is_processed = True
+                    files_count += 1
         
         # Update session
         session.total_qa_pairs += 1
@@ -155,6 +179,7 @@ class ChatService:
         
         if usage:
             usage.qa_pairs_completed += 1
+            usage.files_uploaded += files_count
             usage.updated_at = datetime.utcnow()
         else:
             usage = UsageDaily(
@@ -162,7 +187,7 @@ class ChatService:
                 date=today,
                 sessions_created=1,
                 qa_pairs_completed=1,
-                files_uploaded=0
+                files_uploaded=files_count
             )
             db.add(usage)
         
@@ -176,7 +201,8 @@ class ChatService:
             "response": response,
             "response_version": 1,
             "created_at": new_qa.created_at,
-            "figures": figures
+            "figures": figures,
+            "attachments": new_qa.attachments
         }
     
     @staticmethod
@@ -207,8 +233,9 @@ class ChatService:
         subject = db.query(Subject).filter(Subject.id == session.subject_id).first()
         grade = db.query(Grade).filter(Grade.id == session.grade_id).first()
         
-        # Build system context
-        system_context = f"You are a tutor helping a {grade.level}th grade student with {subject.name}. Provide clear, educational responses."
+        grade_level = grade.level if grade else "unknown"
+        subject_name = subject.name if subject else "various subjects"
+        system_context = f"You are a tutor helping a {grade_level}th grade student with {subject_name}. Provide clear, educational responses."
         
         # Save current response to previous_responses
         previous_responses = qa.previous_responses or []
@@ -225,10 +252,10 @@ class ChatService:
             chat_history=[],
             system_context=system_context,
             session_id=str(session.id),
-            subject_id=str(subject.id),
-            subject_name=subject.name,
-            grade_id=str(grade.id),
-            grade_level=grade.level,
+            subject_id=str(subject.id) if subject else None,
+            subject_name=subject.name if subject else None,
+            grade_id=str(grade.id) if grade else None,
+            grade_level=grade.level if grade else None,
         )
         new_response = rag_result.get("answer", "")
         figures = rag_result.get("figures", [])

@@ -33,7 +33,7 @@ class User(Base):
     # Status & Roles
     is_verified = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
-    role = Column(SQLAlchemyEnum(UserRole), default=UserRole.STUDENT)
+    role = Column(SQLAlchemyEnum(UserRole), default=UserRole.STUDENT,nullable=False)
     subscription_tier = Column(String, default="free")
     
     # Google OAuth fields

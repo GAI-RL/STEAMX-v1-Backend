@@ -32,7 +32,7 @@ class GoogleAuthService:
                 'email_verified': idinfo.get('email_verified', False)
             }
             
-        except ValueError as e:
+        except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Invalid Google token: {str(e)}"
@@ -57,8 +57,12 @@ class GoogleAuthService:
                 user.profile_picture = user_info['profile_picture']
                 user.auth_provider = 'google'
                 user.is_verified = True
+                
+                # ✅ FIX: Set default role if None
+                if user.role is None:
+                    user.role = 'student'
             else:
-                # Create new user
+                # ✅ FIX: Create new user with default role
                 user = User(
                     email=user_info['email'],
                     full_name=user_info['full_name'],
@@ -66,19 +70,32 @@ class GoogleAuthService:
                     profile_picture=user_info['profile_picture'],
                     auth_provider='google',
                     is_verified=True,
-                    password_hash=None
+                    password_hash=None,
+                    role='student',           # ← DEFAULT ROLE
+                    is_active=True,           # ← DEFAULT ACTIVE
+                    subscription_tier='free'  # ← DEFAULT SUBSCRIPTION
                 )
                 db.add(user)
             
             db.commit()
             db.refresh(user)
+        else:
+            # ✅ FIX: For existing users, ensure role is not None
+            if user.role is None:
+                user.role = 'student'
+                db.commit()
+                db.refresh(user)
         
         # Create tokens
         access_token = create_access_token({"sub": str(user.id)})
         refresh_token = create_refresh_token({"sub": str(user.id)})
         
+        # ✅ FIX: Ensure user has all required fields before validation
+        # This line will now work because role is guaranteed to be a string
+        user_response = UserResponse.model_validate(user)
+        
         return GoogleAuthResponse(
             access_token=access_token,
             refresh_token=refresh_token,
-            user=UserResponse.model_validate(user)
+            user=user_response
         )

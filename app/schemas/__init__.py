@@ -7,7 +7,7 @@ from app.schemas.chat import (
     ChatSessionWithMessages,
     SendMessageResponse
 )
-from app.schemas.feedback import FeedbackCreate, FeedbackResponse
+from app.schemas.feedback import FeedbackCreate, FeedbackResponse, ContactFormCreate
 from app.schemas.google_auth import GoogleAuthRequest, GoogleAuthResponse
 
 __all__ = [
@@ -15,6 +15,6 @@ __all__ = [
     "LoginRequest", "TokenResponse", "RefreshTokenRequest",
     "SendMessageRequest", "ChatMessageResponse", "ChatSessionResponse",
     "ChatSessionWithMessages", "SendMessageResponse",
-    "FeedbackCreate", "FeedbackResponse",
+    "FeedbackCreate", "FeedbackResponse", "ContactFormCreate",
     "GoogleAuthRequest", "GoogleAuthResponse"
 ]
